@@ -4,7 +4,8 @@ import requests
 import time
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from datetime import datetime
+from datetime import datetime, UTC
+print(f"[{datetime.now(UTC)}] {msg}")
 import requests
 
 try:
