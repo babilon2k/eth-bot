@@ -5,15 +5,6 @@ import time
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime, UTC
-print(f"[{datetime.now(UTC)}] {msg}")
-import requests
-
-try:
-    ip = requests.get("https://api.ipify.org").text
-    print("MY PUBLIC IP:", ip)
-except Exception as e:
-    print("IP ERROR:", e)
-
 
 # ======================
 # FAKE SERVER (RENDER)
@@ -29,7 +20,7 @@ def run_server():
     server = HTTPServer(("0.0.0.0", 10000), Handler)
     server.serve_forever()
 
-threading.Thread(target=run_server).start()
+threading.Thread(target=run_server, daemon=True).start()
 
 # ======================
 # KONFIG
@@ -48,11 +39,22 @@ POSITION_SIZE = 20
 exchange = ccxt.binance()
 
 # ======================
-# LOG
+# LOG FUNCTION
 # ======================
 
 def log(msg):
-    print(f"[{datetime.utcnow()}] {msg}")
+    print(f"[{datetime.now(UTC)}] {msg}")
+
+# ======================
+# GET PUBLIC IP
+# ======================
+
+def print_ip():
+    try:
+        ip = requests.get("https://api.ipify.org").text
+        log(f"MY PUBLIC IP: {ip}")
+    except Exception as e:
+        log(f"IP ERROR: {e}")
 
 # ======================
 # DATA
@@ -134,6 +136,7 @@ def send(msg):
 
 def run_bot():
     log("BOT STARTED")
+    print_ip()
 
     while True:
         try:
@@ -156,7 +159,7 @@ def run_bot():
             time.sleep(60)
 
 # ======================
-# START BOT
+# START
 # ======================
 
 run_bot()
