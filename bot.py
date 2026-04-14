@@ -2,7 +2,25 @@ import ccxt
 import pandas as pd
 import requests
 import time
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime
+
+# ======================
+# FAKE SERVER (RENDER)
+# ======================
+
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot running")
+
+def run_server():
+    server = HTTPServer(("0.0.0.0", 10000), Handler)
+    server.serve_forever()
+
+threading.Thread(target=run_server).start()
 
 # ======================
 # KONFIG
@@ -15,8 +33,6 @@ WEBHOOK_URL = "https://wtalerts.com/bot/custom"
 
 ENTER_LONG = "ENTER-LONG_Bybit_ETHUSDT_ETH-USDT_15M_8b9f1a73de3fa902b45b458e"
 ENTER_SHORT = "ENTER-SHORT_Bybit_ETHUSDT_ETH-USDT_15M_8b9f1a73de3fa902b45b458e"
-EXIT_LONG = "EXIT-LONG_Bybit_ETHUSDT_ETH-USDT_15M_8b9f1a73de3fa902b45b458e"
-EXIT_SHORT = "EXIT-SHORT_Bybit_ETHUSDT_ETH-USDT_15M_8b9f1a73de3fa902b45b458e"
 
 POSITION_SIZE = 20
 
@@ -104,27 +120,34 @@ def send(msg):
         log(f"Send error: {e}")
 
 # ======================
-# LOOP
+# BOT LOOP
 # ======================
 
-log("BOT STARTED")
+def run_bot():
+    log("BOT STARTED")
 
-while True:
-    try:
-        df = get_data()
-        signal = get_signal(df)
+    while True:
+        try:
+            df = get_data()
+            signal = get_signal(df)
 
-        if signal == "LONG":
-            send(ENTER_LONG)
+            if signal == "LONG":
+                send(ENTER_LONG)
 
-        elif signal == "SHORT":
-            send(ENTER_SHORT)
+            elif signal == "SHORT":
+                send(ENTER_SHORT)
 
-        else:
-            log("No signal")
+            else:
+                log("No signal")
 
-        time.sleep(60 * 15)
+            time.sleep(60 * 15)
 
-    except Exception as e:
-        log(f"ERROR: {e}")
-        time.sleep(60)
+        except Exception as e:
+            log(f"ERROR: {e}")
+            time.sleep(60)
+
+# ======================
+# START BOT
+# ======================
+
+run_bot()
