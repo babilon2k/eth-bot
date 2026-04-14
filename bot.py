@@ -28,7 +28,7 @@ def log(msg):
     print(f"[{datetime.now(UTC)}] {msg}", flush=True)
 
 # ======================
-# IP CHECK
+# IP
 # ======================
 
 def print_ip():
@@ -42,17 +42,20 @@ def print_ip():
 # CONFIG
 # ======================
 
-SYMBOL = "ETH/USDT"
+SYMBOL = "ETH/USDT:USDT"
 TIMEFRAME = "15m"
 
 WEBHOOK_URL = "https://wtalerts.com/bot/custom"
 
 ENTER_LONG = "ENTER-LONG_Bybit_ETHUSDT_ETH-USDT_15M_8b9f1a73de3fa902b45b458e"
 ENTER_SHORT = "ENTER-SHORT_Bybit_ETHUSDT_ETH-USDT_15M_8b9f1a73de3fa902b45b458e"
+EXIT_LONG = "EXIT-LONG_Bybit_ETHUSDT_ETH-USDT_15M_8b9f1a73de3fa902b45b458e"
+EXIT_SHORT = "EXIT-SHORT_Bybit_ETHUSDT_ETH-USDT_15M_8b9f1a73de3fa902b45b458e"
 
 POSITION_SIZE = 20
+TRAILING_STOP = 1.0  # %
 
-exchange = ccxt.binance()
+exchange = ccxt.bybit({"enableRateLimit": True})
 
 # ======================
 # DATA
@@ -129,22 +132,64 @@ def send(msg):
         log(f"Send error: {e}")
 
 # ======================
+# STATE
+# ======================
+
+position = None
+highest_price = 0
+lowest_price = 999999
+
+# ======================
 # BOT LOOP
 # ======================
 
 def run_bot():
+    global position, highest_price, lowest_price
+
     log("BOT STARTED")
     print_ip()
 
     while True:
         try:
             df = get_data()
+            price = df.iloc[-1]["close"]
             signal = get_signal(df)
 
-            if signal == "LONG":
+            # ENTRY
+            if signal == "LONG" and position is None:
                 send(ENTER_LONG)
-            elif signal == "SHORT":
+                position = "LONG"
+                highest_price = price
+
+            elif signal == "SHORT" and position is None:
                 send(ENTER_SHORT)
+                position = "SHORT"
+                lowest_price = price
+
+            # TRAILING LONG
+            elif position == "LONG":
+                if price > highest_price:
+                    highest_price = price
+
+                drawdown = (highest_price - price) / highest_price * 100
+
+                if drawdown >= TRAILING_STOP:
+                    log("EXIT LONG (trailing)")
+                    send(EXIT_LONG)
+                    position = None
+
+            # TRAILING SHORT
+            elif position == "SHORT":
+                if price < lowest_price:
+                    lowest_price = price
+
+                drawdown = (price - lowest_price) / lowest_price * 100
+
+                if drawdown >= TRAILING_STOP:
+                    log("EXIT SHORT (trailing)")
+                    send(EXIT_SHORT)
+                    position = None
+
             else:
                 log("No signal")
 
@@ -155,7 +200,7 @@ def run_bot():
             time.sleep(60)
 
 # ======================
-# START EVERYTHING
+# START
 # ======================
 
 threading.Thread(target=run_server, daemon=True).start()
