@@ -28,7 +28,7 @@ def log(msg):
     print(f"[{datetime.now(UTC)}] {msg}", flush=True)
 
 # ======================
-# IP
+# IP CHECK
 # ======================
 
 def print_ip():
@@ -154,6 +154,10 @@ def run_bot():
             df = get_data()
             price = df.iloc[-1]["close"]
             signal = get_signal(df)
+
+            # 🔁 IP CHECK co 30 min
+            if int(time.time()) % 1800 < 60:
+                print_ip()
 
             # ENTRY
             if signal == "LONG" and position is None:
