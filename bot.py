@@ -19,6 +19,10 @@ def run_server():
 
 threading.Thread(target=run_server).start()
 
+
+ip = requests.get("https://api.ipify.org").text
+print("MY IP:", ip)
+
 # ======================
 # KONFIG
 # ======================
