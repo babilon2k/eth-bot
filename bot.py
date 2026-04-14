@@ -6,6 +6,8 @@ import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime
 
+
+
 # ======================
 # FAKE SERVER (RENDER)
 # ======================
@@ -22,6 +24,9 @@ def run_server():
 
 threading.Thread(target=run_server).start()
 
+
+ip = requests.get("https://api.ipify.org").text
+print("MY PUBLIC IP:", ip)
 # ======================
 # KONFIG
 # ======================
