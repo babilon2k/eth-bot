@@ -23,6 +23,11 @@ threading.Thread(target=run_server).start()
 ip = requests.get("https://api.ipify.org").text
 print("MY IP:", ip)
 
+while True:
+    ip = requests.get("https://api.ipify.org").text
+    print("CURRENT IP:", ip)
+    time.sleep(300)
+
 # ======================
 # KONFIG
 # ======================
