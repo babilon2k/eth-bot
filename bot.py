@@ -7,7 +7,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime, UTC
 
 # ======================
-# FAKE SERVER (RENDER)
+# SERVER (RENDER)
 # ======================
 
 class Handler(BaseHTTPRequestHandler):
@@ -20,10 +20,26 @@ def run_server():
     server = HTTPServer(("0.0.0.0", 10000), Handler)
     server.serve_forever()
 
-threading.Thread(target=run_server, daemon=True).start()
+# ======================
+# LOG
+# ======================
+
+def log(msg):
+    print(f"[{datetime.now(UTC)}] {msg}", flush=True)
 
 # ======================
-# KONFIG
+# IP CHECK
+# ======================
+
+def print_ip():
+    try:
+        ip = requests.get("https://api.ipify.org").text
+        log(f"MY PUBLIC IP: {ip}")
+    except Exception as e:
+        log(f"IP ERROR: {e}")
+
+# ======================
+# CONFIG
 # ======================
 
 SYMBOL = "ETH/USDT"
@@ -37,24 +53,6 @@ ENTER_SHORT = "ENTER-SHORT_Bybit_ETHUSDT_ETH-USDT_15M_8b9f1a73de3fa902b45b458e"
 POSITION_SIZE = 20
 
 exchange = ccxt.binance()
-
-# ======================
-# LOG FUNCTION
-# ======================
-
-def log(msg):
-    print(f"[{datetime.now(UTC)}] {msg}")
-
-# ======================
-# GET PUBLIC IP
-# ======================
-
-def print_ip():
-    try:
-        ip = requests.get("https://api.ipify.org").text
-        log(f"MY PUBLIC IP: {ip}")
-    except Exception as e:
-        log(f"IP ERROR: {e}")
 
 # ======================
 # DATA
@@ -80,7 +78,7 @@ def rsi(series, p=14):
     return 100 - (100 / (1 + rs))
 
 # ======================
-# STRATEGIA
+# STRATEGY
 # ======================
 
 def get_signal(df):
@@ -145,10 +143,8 @@ def run_bot():
 
             if signal == "LONG":
                 send(ENTER_LONG)
-
             elif signal == "SHORT":
                 send(ENTER_SHORT)
-
             else:
                 log("No signal")
 
@@ -159,7 +155,11 @@ def run_bot():
             time.sleep(60)
 
 # ======================
-# START
+# START EVERYTHING
 # ======================
 
-run_bot()
+threading.Thread(target=run_server, daemon=True).start()
+threading.Thread(target=run_bot, daemon=True).start()
+
+while True:
+    time.sleep(60)
